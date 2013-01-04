@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Yoichiro Hasebe"]
   gem.email         = ["yohasebe@gmail.com"]
   gem.description   = "TedTalk helps download TED talk video "
-  gem.description  += "and covert it to MP3 that can be conveniently used for English learning"
+  gem.description  += "and covert it to a slowed down MP3 with pauses that is useful for English learning"
   gem.summary       = "TED talk downloader and converter for English learners"
   gem.homepage      = "http://github.com/yohasebe/ted_talk"
 

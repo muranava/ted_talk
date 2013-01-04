@@ -12,7 +12,7 @@ opts = Trollop::options do
   version TedTalk::VERSION
   banner <<-EOS
   
-TedTalk helps download TED talk video and covert it to MP3 that can be conveniently used for English learning.
+TedTalk helps download TED talk video and covert it to a slowed down MP3 with pauses that is helpful for English learning.
 
 Usage: ted_talk [options] <source url>
 where: <source url> is something like "http://www.ted.com/talks/xxx_xxx_xxx.html"

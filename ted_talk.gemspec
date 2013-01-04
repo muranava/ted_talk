@@ -17,4 +17,11 @@ Gem::Specification.new do |gem|
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
+  gem.add_development_dependency "minitest"
+  gem.add_runtime_dependency "progressbar"
+  gem.add_runtime_dependency "json"
+  gem.add_runtime_dependency "taglib"
+  gem.add_runtime_dependency "nokogiri"  
+  gem.add_runtime_dependency "speak_slow"
+  gem.add_runtime_dependency "trollop"    
 end

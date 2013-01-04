@@ -4,7 +4,6 @@
 
 TedTalk helps download TED talk video and covert it to a slowed down MP3 with pauses that is useful for English learning
 
-
 ## Installation
 
 *TedTalk requires [FFmpeg](http://ffmpeg.org/) with LAME support installed to the system.  Then `gem install`*

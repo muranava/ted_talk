@@ -3,21 +3,23 @@
 
 $:.unshift "~/Dropbox/code/speak_slow/lib"
 
-require 'rubygems'
 require 'ted_talk/version'
-require 'progressbar'
-require 'net/http'
+require 'speak_slow'
 require 'json'
+require 'net/http'
+require 'digest/md5'
+require 'rubygems'
+require 'progressbar'
 require 'taglib'
 require 'nokogiri'
-require 'speak_slow'
-require 'digest/md5'
+
+FFMPEG = "/usr/local/bin/ffmpeg"
+
+CACHE_DIR = File.expand_path(File.dirname(__FILE__)) + "/../cache"
 
 INTRO_DURATION = 16500
 AD_DURATION = 4000
 POST_AD_DURATION = 2000
-ADJUST = 500
-CACHE_DIR = File.expand_path(File.dirname(__FILE__)) + "/../cache"
 
 Dir.mkdir(CACHE_DIR) unless File.exists?(CACHE_DIR)
 
@@ -25,6 +27,9 @@ module TedTalk
 class Converter
   
   def initialize(url, outdir = "./")
+    
+    @ffmpeg = check_command(FFMPEG)
+    
     if /(?:http\:\/\/)?(?:www\.)?ted\.com\/talks\/(?:lang\/[^\/]+\/)?(.+\.html)/ =~ url
       @url = "http://www.ted.com/talks/" + $1
     else
@@ -97,7 +102,7 @@ class Converter
     setup_lang(lang)
     get_video unless File.exists?(@video_filepath)
     get_wav unless File.exists?(@wav_filepath)
-    outfile = @outdir + "-result.mp3"
+    outfile = @outdir + "/" + @basename + "-result.mp3"
     speakslow = SpeakSlow::Converter.new(@wav_filepath, outfile)
     speakslow.execute(0.5, 2)
     write_info(outfile)    
@@ -142,7 +147,7 @@ class Converter
     
   def get_wav
     puts "Converting to audio: #{@basename}.wav"      
-    result = `/usr/local/bin/ffmpeg  -loglevel panic -i #{@video_filepath} -ac 1 -vn -acodec pcm_s16le -ar 44100 #{@wav_filepath}`
+    `#{@ffmpeg} -loglevel panic -i #{@video_filepath} -ac 1 -vn -acodec pcm_s16le -ar 44100 #{@wav_filepath}`
   end
 
   def get_captions(lang = "en")
@@ -340,8 +345,24 @@ class Converter
     else
       File.delete(directory_path) rescue ""
     end
+  end  
+    
+  def check_command(command)
+    basename = File.basename(command)
+    path = ""
+    if open("| which #{command} 2>/dev/null"){ |f| path = f.gets }
+      puts "\"#{basename}\" command is installed in #{path}"
+      return path.strip
+    elsif open("| which #{basename} 2>/dev/null"){ |f| path = f.gets }
+      puts "\"#{basename}\" command is installed in #{path}"
+      return path.strip
+    else
+      puts "#{basename} is not installed to the system"
+      exit
+    end
   end
-  
+
+
 end # of class
 end # of module
 

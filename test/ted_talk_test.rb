@@ -12,18 +12,19 @@ class TestTedTalk < MiniTest::Unit::TestCase
     @tedtalk    = TedTalk::Converter.new(@source_url, @outdir)
   end
   
-  def test_description
-    @tedtalk.desc("ja")
-  end
+  # def test_description
+  #   @tedtalk.desc("ja")
+  # end
   
   def test_execution
+    speed = 0.5
     silence = 2
-    language = "zh-tw"
-    @tedtalk.execute(silence, language)
+    language = "ja"
+    @tedtalk.execute(speed, silence, language)
   end
 
   def teardown
-    `rm -rf #{@outdir}`
+    # `rm -rf #{@outdir}`
   end
 
   # def test_for_helvetica_font

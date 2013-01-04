@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
+$:.unshift "~/Dropbox/code/speak_slow/lib"
+
 require 'rubygems'
 require 'ted_talk/version'
 require 'progressbar'
@@ -8,16 +10,15 @@ require 'net/http'
 require 'json'
 require 'taglib'
 require 'nokogiri'
+require 'speak_slow'
 require 'digest/md5'
 
 INTRO_DURATION = 16500
 AD_DURATION = 4000
 POST_AD_DURATION = 2000
 ADJUST = 500
-DATA_DIR = File.expand_path(File.dirname(__FILE__)) + "/../data"
 CACHE_DIR = File.expand_path(File.dirname(__FILE__)) + "/../cache"
 
-Dir.mkdir(DATA_DIR) unless File.exists?(DATA_DIR)
 Dir.mkdir(CACHE_DIR) unless File.exists?(CACHE_DIR)
 
 module TedTalk
@@ -40,18 +41,14 @@ class Converter
     ted_doc = Nokogiri::HTML(@html)  
     data = ted_doc.xpath("//div[@id='share_and_save']").first
     @ted_id = data.attribute("data-id").value
-    # @url = data.attribute("data-url").value
     @video_url = ted_doc.xpath("//a[@id='no-flash-video-download']").attribute("href").value
-    # @video_url = get_video_urls(ted_doc.text)[-1]
     /(.+)(?:\-[^\-]+)?/ =~ File.basename(@video_url, ".*")
     @basename  = $1
     @outdir = File.join(outdir, @ted_id + "-" + @basename)    
     Dir.mkdir(@outdir) unless File.exists?(@outdir)    
     @captions = {}
     @title = ted_doc.xpath("//h1[1]").text.strip rescue ""
-    # title = data.attribute("data-title").value    
     @speaker = @title.split(":", 2).first.strip rescue ""
-    # speaker = ted_doc.xpath("//div[@class='quote-attribution'][1]/a[1]").attribute("title").value    
     @available_langs = []
     ted_doc.xpath("//select[@id='languageCode'][1]/option").collect do |op|
       v = op.attributes["value"].value.strip
@@ -65,10 +62,9 @@ class Converter
     @descriptions = {}
     @descriptions["en"] = get_description("en")
     get_captions("en")    
-    
   end
   
-  def setup_second_lang(lang)
+  def setup_lang(lang)
     unless @available_langs.index lang
       puts "Description in #{lang} is not available"
       return false
@@ -84,7 +80,7 @@ class Converter
   end
       
   def desc(lang = "en")    
-    setup_second_lang(lang)  
+    setup_lang(lang)  
     puts "\nTitle:\n" + @titles["en"]    
     puts @titles[lang] if lang != "en"
     puts ""
@@ -97,19 +93,14 @@ class Converter
     end
   end
   
-  def execute(silence = 0, lang = "en")
-    setup_second_lang(lang)
+  def execute(speed = 0.7, silence = 2, lang = "en")
+    setup_lang(lang)
     get_video unless File.exists?(@video_filepath)
-    get_wav unless File.exists?(@wav_filepath) 
-    if silence > 0
-      split_wav
-      merged = merge_wav(silence)
-      mp3 = convert_to_mp3(merged)
-      `unlink #{merged}`      
-    else
-      mp3 = convert_to_mp3(@wav_filepath)
-    end
-    write_info(mp3)    
+    get_wav unless File.exists?(@wav_filepath)
+    outfile = @outdir + "-result.mp3"
+    speakslow = SpeakSlow::Converter.new(@wav_filepath, outfile)
+    speakslow.execute(0.5, 2)
+    write_info(outfile)    
   end
 
   def get_title(lang)
@@ -192,61 +183,6 @@ class Converter
     return captions
   end
     
-  def split_wav
-    captions = @captions["en"]
-    puts "Splitting WAV to segments"
-    num_digits = captions.size.to_s.split(//).size
-    
-    ##########
-    # timings = []
-    # captions.each_with_index do |c, index|
-    #   timings << start_time = c[:start_time_s]
-    # end
-    # timings.unshift "00.00.00" unless timings[0] == "00.00.00"
-    # end_time = format_time(captions[-1][:start_time] + captions[-1][:duration])
-    # timings.push end_time
-    # timings.push "EOF"
-    # result = `/usr/local/bin/mp3splt -f -O 00.00.25 -o split-@n #{@wav_filepath} #{timings.join(" ")}`
-    ##########
-
-    result = `/usr/local/bin/sox #{@wav_filepath}  #{@outdir}/split-.wav silence 0 1 0.3 -32d : newfile : restart`
-  end
-
-  def merge_wav(silence = 0)
-    silence_filepath = DATA_DIR + "/silence.wav"
-    merged_filepath = @outdir + "/" + @basename + "-m.wav"
-    temp_filepath = @outdir + "/temp.wav"
-    puts "Merging segments back to one WAV file"
-    num_digits = @captions["en"].size.to_s.split(//).size
-    files = []
-    Dir.foreach(@outdir) do |file|
-      next unless /^split\-\d+\.wav$/ =~ file
-      files << @outdir + "/" + file      
-    end
-    index = 0
-    bar = ProgressBar.new(@basename, files.size)        
-    files.sort.each do |filepath|
-      length = `/usr/local/bin/soxi -D #{filepath}`.to_f
-      index += 1      
-      bar.inc(1)
-      if index == 1
-        File.rename(filepath, merged_filepath)
-        next
-      end
-      blank_part = length > 0.0 ? (silence_filepath + " ")  * silence : ""
-      `/usr/local/bin/sox #{merged_filepath} #{filepath} #{blank_part} #{temp_filepath} ; mv #{temp_filepath} #{merged_filepath} ; rm #{filepath}`
-    end
-    print "\n"
-    return merged_filepath    
-  end
-
-  def convert_to_mp3(filepath)
-    result_mp3 = @outdir + "/" + @basename + ".mp3"
-    `/usr/local/bin/ffmpeg -y -loglevel panic -i #{filepath} -acodec mp3 -ab 128k #{result_mp3}`
-    puts "Converting WAV to MP3: #{@basename}.mp3"
-    result_mp3
-  end
-
   ##### helper methods #####
 
   def list_langs

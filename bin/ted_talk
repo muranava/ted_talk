@@ -22,12 +22,15 @@ EOS
 
   opt :lang, "Language of description and bilingual transcript", :default => "en"
   opt :outdir, "Directory for file output", :default=> "./"
-  opt :silence, "Number of seconds after each speech phrase", :default => 0
+  opt :speed, "Speed of output file [0.1 - 100]", :default => 1.0
+  opt :silence, "Length (secondes) of a pause added to each utterance [0.1 - 120]", :default => 0
   opt :desc, "Show descriptions of the talk", :default => false
 
 end
 Trollop::die :outdir, "must be an existing directory" unless File::ftype(opts[:outdir]) == "directory"
-Trollop::die :silence, "must be 0 or a larger integer" if opts[:silence] < 0
+Trollop::die :speed, "must between 0.1 to 100" unless opts[:speed] >= 0.1 and opts[:speed] <= 100
+Trollop::die :silence, "must be 0 to 120" unless opts[:silence] >= 0.1 and opts[:silence] <= 120
+
 
 ############### main program ############### 
 
@@ -38,6 +41,7 @@ end
 
 source_url = ARGV[0]
 outdir     = opts[:outdir]
+speed      = opts[:speed]
 silence    = opts[:silence]
 lang       = opts[:lang]
 
@@ -46,19 +50,19 @@ tedtalk = TedTalk::Converter.new(source_url, outdir)
 if opts[:desc]
   tedtalk.desc(lang)
 else
-  tedtalk.execute(silence, lang)
+  tedtalk.execute(speed, silence, lang)
 end
 
-# url = "http://www.ted.com/talks/steven_addis_a_father_daughter_bond_one_photo_at_a_time.html"
-# url = "http://www.ted.com/talks/jonathan_haidt_on_the_moral_mind.html"
-# url = "http://www.ted.com/talks/susan_cain_the_power_of_introverts.html"
-# url = "http://www.ted.com/talks/amy_cuddy_your_body_language_shapes_who_you_are.html"
-# url = "http://www.ted.com/talks/ken_robinson_says_schools_kill_creativity.html"
-# url = "http://www.ted.com/talks/pranav_mistry_the_thrilling_potential_of_sixthsense_technology.html"
-# url = "http://www.ted.com/talks/rives_reinventing_the_encyclopedia_game.html"
-# url = "http://www.ted.com/talks/hans_rosling_and_the_magic_washing_machine.html"
-# url = "http://www.ted.com/talks/israel_and_iran_a_love_story.html"
-# url = "http://www.ted.com/talks/lemon_andersen_performs_please_don_t_take_my_air_jordans.html"
-# url = "http://www.ted.com/talks/j_j_abrams_mystery_box.html"
-# url = "http://www.ted.com/talks/robert_gupta_between_music_and_medicine.html"
+# http://www.ted.com/talks/steven_addis_a_father_daughter_bond_one_photo_at_a_time.html
+# http://www.ted.com/talks/jonathan_haidt_on_the_moral_mind.html
+# http://www.ted.com/talks/susan_cain_the_power_of_introverts.html
+# http://www.ted.com/talks/amy_cuddy_your_body_language_shapes_who_you_are.html
+# http://www.ted.com/talks/ken_robinson_says_schools_kill_creativity.html
+# http://www.ted.com/talks/pranav_mistry_the_thrilling_potential_of_sixthsense_technology.html
+# http://www.ted.com/talks/rives_reinventing_the_encyclopedia_game.html
+# http://www.ted.com/talks/hans_rosling_and_the_magic_washing_machine.html
+# http://www.ted.com/talks/israel_and_iran_a_love_story.html
+# http://www.ted.com/talks/lemon_andersen_performs_please_don_t_take_my_air_jordans.html
+# http://www.ted.com/talks/j_j_abrams_mystery_box.html
+# http://www.ted.com/talks/robert_gupta_between_music_and_medicine.html
 

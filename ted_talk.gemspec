@@ -22,4 +22,6 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "json"
   gem.add_runtime_dependency "taglib"
   gem.add_runtime_dependency "nokogiri"  
+  gem.add_runtime_dependency "speak_slow"
+  gem.add_runtime_dependency "trollop"    
 end

@@ -23,16 +23,22 @@ EOS
   opt :lang, "Language of description and bilingual transcript", :default => "en"
   opt :outdir, "Directory for file output", :default=> "./"
   opt :speed, "Speed of output file [0.1 - 100]", :default => 1.0
-  opt :silence, "Length (secondes) of a pause added to each utterance [0.1 - 120]", :default => 0
+  opt :silence, "Length (secondes) of a pause added to each utterance [0.1 - 120]", :default => 0.0
   opt :desc, "Show descriptions of the talk", :default => false
-
+  opt :rss, "Show descriptions of the newest talks from TED Talk RSS", :default => false
 end
-Trollop::die :outdir, "must be an existing directory" unless File::ftype(opts[:outdir]) == "directory"
-Trollop::die :speed, "must between 0.1 to 100" unless opts[:speed] >= 0.1 and opts[:speed] <= 100
-Trollop::die :silence, "must be 0 to 120" unless opts[:silence] >= 0.1 and opts[:silence] <= 120
-
 
 ############### main program ############### 
+
+outdir     = opts[:outdir]
+speed      = opts[:speed]
+silence    = opts[:silence]
+lang       = opts[:lang]
+
+if opts[:rss]
+  TedTalk.desp_talks_rss(lang)  
+  exit
+end
 
 if ARGV.size != 1
   puts "A valide source URL must be set properly"
@@ -40,18 +46,20 @@ if ARGV.size != 1
 end
 
 source_url = ARGV[0]
-outdir     = opts[:outdir]
-speed      = opts[:speed]
-silence    = opts[:silence]
-lang       = opts[:lang]
-
-tedtalk = TedTalk::Converter.new(source_url, outdir)
 
 if opts[:desc]
+  tedtalk = TedTalk::Converter.new(source_url)
   tedtalk.desc(lang)
-else
-  tedtalk.execute(speed, silence, lang)
+  exit
 end
+
+Trollop::die :outdir, "must be an existing directory" unless File::ftype(opts[:outdir]) == "directory"
+Trollop::die :speed, "must between 0.1 to 100" unless opts[:speed] >= 0.1 and opts[:speed] <= 100
+Trollop::die :silence, "must be 0 to 120" unless opts[:silence] >= 0.1 and opts[:silence] <= 120
+
+tedtalk = TedTalk::Converter.new(source_url)
+
+tedtalk.execute(outdir, lang, speed, silence)
 
 # http://www.ted.com/talks/steven_addis_a_father_daughter_bond_one_photo_at_a_time.html
 # http://www.ted.com/talks/jonathan_haidt_on_the_moral_mind.html

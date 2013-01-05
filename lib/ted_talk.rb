@@ -98,13 +98,13 @@ class Converter
     end
   end
   
-  def execute(speed = 0.7, silence = 2, lang = "en")
+  def execute(speed = 1, silence = 0, lang = "en")
     setup_lang(lang)
     get_video unless File.exists?(@video_filepath)
     get_wav unless File.exists?(@wav_filepath)
     outfile = @outdir + "/" + @basename + "-result.mp3"
     speakslow = SpeakSlow::Converter.new(@wav_filepath, outfile)
-    speakslow.execute(0.5, 2)
+    speakslow.execute(speed, silence)
     write_info(outfile)    
   end
 

@@ -6,9 +6,8 @@ class TestTedTalk < MiniTest::Unit::TestCase
   def setup
     @source_url = "http://www.ted.com/talks/steven_addis_a_father_daughter_bond_one_photo_at_a_time.html"
     @outdir     = File.expand_path(File.dirname(__FILE__)) + "/temp"
-    `rm -rf #{@outdir}` if File.exists? @outdir    
-    `mkdir #{@outdir}` 
-    @silence    = 2
+    # `rm -rf #{@outdir}` if File.exists? @outdir    
+    `mkdir #{@outdir}` unless File.exists? @outdir    
     @tedtalk    = TedTalk::Converter.new(@source_url, @outdir)
   end
   
@@ -17,7 +16,7 @@ class TestTedTalk < MiniTest::Unit::TestCase
   # end
   
   def test_execution
-    speed = 0.5
+    speed = 1
     silence = 2
     language = "ja"
     @tedtalk.execute(speed, silence, language)

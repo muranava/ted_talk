@@ -6,61 +6,6 @@ require 'rubygems'
 require 'trollop'
 require 'ted_talk'
 
-################ parse options ##########
-
-opts = Trollop::options do
-  version TedTalk::VERSION
-  banner <<-EOS
-  
-TedTalk helps download TED talk video and covert it to a slowed down MP3 with pauses that is helpful for English learning.
-
-Usage: ted_talk [options] <source url>
-where: <source url> is something like "http://www.ted.com/talks/xxx_xxx_xxx.html"
-
-[options]:
-EOS
-
-  opt :lang, "Language of description and bilingual transcript", :default => "en"
-  opt :outdir, "Directory for file output", :default=> "./"
-  opt :speed, "Speed of output file [0.1 - 100]", :default => 1.0
-  opt :silence, "Length (secondes) of a pause added to each utterance [0.1 - 120]", :default => 0.0
-  opt :desc, "Show descriptions of the talk", :default => false
-  opt :rss, "Show descriptions of the newest talks from TED Talk RSS", :default => false
-end
-
-############### main program ############### 
-
-outdir     = opts[:outdir]
-speed      = opts[:speed]
-silence    = opts[:silence]
-lang       = opts[:lang]
-
-if opts[:rss]
-  TedTalk.desp_talks_rss(lang)  
-  exit
-end
-
-if ARGV.size != 1
-  puts "A valide source URL must be set properly"
-  exit
-end
-
-source_url = ARGV[0]
-
-if opts[:desc]
-  tedtalk = TedTalk::Converter.new(source_url)
-  tedtalk.desc(lang)
-  exit
-end
-
-Trollop::die :outdir, "must be an existing directory" unless File::ftype(opts[:outdir]) == "directory"
-Trollop::die :speed, "must between 0.1 to 100" unless opts[:speed] >= 0.1 and opts[:speed] <= 100
-Trollop::die :silence, "must be 0 to 120" unless opts[:silence] >= 0.1 and opts[:silence] <= 120
-
-tedtalk = TedTalk::Converter.new(source_url)
-
-tedtalk.execute(outdir, lang, speed, silence)
-
 # http://www.ted.com/talks/steven_addis_a_father_daughter_bond_one_photo_at_a_time.html
 # http://www.ted.com/talks/jonathan_haidt_on_the_moral_mind.html
 # http://www.ted.com/talks/susan_cain_the_power_of_introverts.html
@@ -74,3 +19,89 @@ tedtalk.execute(outdir, lang, speed, silence)
 # http://www.ted.com/talks/j_j_abrams_mystery_box.html
 # http://www.ted.com/talks/robert_gupta_between_music_and_medicine.html
 
+
+SUB_COMMANDS = ["desc", "exec"]
+global_opts = Trollop::options do
+  version TedTalk::VERSION
+  banner <<-EOS
+TedTalk helps download TED talk video and covert it to a slowed down MP3 with pauses that is helpful for English learning
+
+Basic usage: tedtalk desc <option>
+             tedtalk exec <option> 
+
+For details about <option>, type:
+             tedtalk desc -h
+      or     tedtalk exec -h
+
+[global options]:
+EOS
+
+  stop_on SUB_COMMANDS
+end
+
+cmd = ARGV.shift # get the subcommand
+cmd_opts = case cmd
+
+  when "desc" # parse delete options
+    desc_opts = Trollop::options do
+    banner <<-EOS
+tedtalk desc subcommand shows TED Talk descriptions in the newest official RSS feed or the URL of a specific talk
+
+Usage: ted_talk desc <options>
+where <options> are:
+
+[desc options]:
+EOS
+
+    opt :lang, "Language of description", :default => "en", :type => :string
+    opt :rss, "Show descriptions of the newest talks from TED Talk RSS", :default => false
+    opt :url, "URL of a specific TED Talk", :type => :string
+  end    
+  
+  if desc_opts[:url] and /http\:\/\/www\.ted\.com\/talks\// !~ desc_opts[:url]
+    Trollop::die :url, "must include 'http://www.ted.com/talks/'" 
+  end
+  
+  lang = desc_opts[:lang]
+
+  if source_url = desc_opts[:url]
+    tedtalk = TedTalk::Converter.new(source_url)
+    tedtalk.desc_talk(lang)
+  elsif desc_opts[:rss]
+    TedTalk.desc_talks_rss(lang)  
+  else
+    Trollop::die "invalid options"
+  end  
+when "exec"  # parse exec options
+  exec_opts = Trollop::options do
+    banner <<-EOS
+tedtalk exec subcommand download TED Talk video and convert it to an MP3 file that is modified in a specified fashion
+
+Usage: ted_talk exec <options>
+where <options> are:
+
+[exec options]      
+EOS
+
+    opt :url, "URL of a specific TED Talk", :type => :string
+    opt :lang, "Language of (bilingual) transcripts", :default => "en", :type => :string
+    opt :outdir, "Directory for file output", :default=> "./"
+    opt :speed, "Speed of output file [0.1 - 100]", :default => 1.0
+    opt :silence, "Length (secondes) of a pause added to each utterance [0.1 - 120]", :default => 0.0
+  end
+
+  Trollop::die :outdir, "must be an existing directory" unless File::ftype(exec_opts[:outdir]) == "directory"
+  Trollop::die :speed, "must between 0.1 to 100" unless exec_opts[:speed] >= 0.1 and exec_opts[:speed] <= 100
+  Trollop::die :silence, "must be 0 to 120" unless exec_opts[:silence] >= 0 and exec_opts[:silence] <= 120
+  
+  source_url = exec_opts[:url]
+  lang       = exec_opts[:lang]    
+  outdir     = exec_opts[:outdir]
+  speed      = exec_opts[:speed]
+  silence    = exec_opts[:silence]
+
+  tedtalk = TedTalk::Converter.new(source_url)
+  tedtalk.execute(outdir, lang, speed, silence)
+else
+  Trollop::die "unknown subcommand #{cmd.inspect}"
+end

@@ -50,18 +50,41 @@ module WebUtils
     return html    
   end
 
+  def get_json(url, without_cache = false)
+    key = Digest::MD5.new.update(url).to_s
+    script = nil
+    if File.exists?(CACHE_DIR + "/" + key) and !without_cache
+      json_text = File.read(CACHE_DIR + "/" + key)
+      script = JSON.parse(json_text)
+    else
+      begin
+        uri = URI(get_final_location(url))
+        res = Net::HTTP.get_response(uri)
+        json_text = res.body
+        script = JSON.parse(json_text) 
+        File.open(CACHE_DIR + "/" + key, "w") do |f|
+          f.write JSON.pretty_generate script
+        end
+      rescue => e
+        puts "Not able to download HTML"
+        exit
+      end
+    end
+    return script
+  end
+
   def get_final_location(url)
     begin
-       Net::HTTP.get_response(URI(url)) do |res|
-         location = res["location"]
-         return url if location.nil?
-         return get_final_location(location)
-       end
-     rescue
-       puts "Not able to connect to the Internet"
-       return url
-     end
-   end
+      Net::HTTP.get_response(URI(url)) do |res|
+        location = res["location"]
+        return url if location.nil?
+        return get_final_location(location)
+      end
+    rescue => e
+      puts "Not able to reach at the final location"
+      return url
+    end
+  end
     
   def download_successful?(full_file_path, file_size)
     File.exist?(full_file_path) && File.size(full_file_path) == file_size
@@ -74,10 +97,11 @@ end
 
 module TedTalk  
   
-  def self.desp_talks_rss(lang, num = 12)
+  def self.desc_talks_rss(lang, num = 12)
     if lang != "en"
       html = WebUtils.get_html("http://www.ted.com/translate/languages/#{lang}", true)
       html_doc = Nokogiri::HTML(html)  
+      puts "--------------------------------------------------"  
       html_doc.xpath("//div[@id='list']//dd//a[1]").each do |link|
         puts link.attribute("title")
         puts link.attribute("href").text.sub(/\A\//, "http://www.ted.com/")
@@ -87,6 +111,7 @@ module TedTalk
       rss_html = WebUtils.get_html("http://feeds.feedburner.com/tedtalks_video", true)
       rss_doc = Nokogiri::XML(rss_html)  
       talks = rss_doc.xpath("//item")
+      puts "--------------------------------------------------"  
       talks.each_with_index do |talk, index|      
         puts title = talk.xpath("title").text
         puts pubdate = talk.xpath("pubDate").text
@@ -104,7 +129,7 @@ module TedTalk
     include WebUtils
         
     def initialize(url)
-      # begin        
+      begin        
         if /(?:http\:\/\/)?(?:www\.)?ted\.com\/talks\/(?:lang\/[^\/]+\/)?(.+\.html)/ =~ url
           @url = "http://www.ted.com/talks/" + $1
         else
@@ -136,12 +161,11 @@ module TedTalk
         @titles["en"] = get_title("en")
         @descriptions = {}
         @descriptions["en"] = get_description("en")
-        @language_hash = list_langs
-        
-      # rescue => e
-      #   puts "The specified URL does not seem to contain a regular TED Talk contents"
-      #   exit
-      # end
+        @language_hash = list_langs        
+      rescue => e
+        puts "The specified URL does not seem to contain a regular TED Talk contents"
+        exit
+      end
     end
   
     def setup_lang(lang)
@@ -157,7 +181,7 @@ module TedTalk
       end    
     end
       
-    def desc(lang = "en") 
+    def desc_talk(lang = "en") 
       setup_lang(lang)  
       unless @descriptions[lang]
         lang = "en"
@@ -175,6 +199,7 @@ module TedTalk
     end
   
     def execute(outdir = "./", lang = "en", speed = 1, silence = 0)
+      puts "TedTalk is prepararing for the process"
       @outdir = File.join(outdir, @ted_id + "-" + @basename)    
       Dir.mkdir(@outdir) unless File.exists?(@outdir)    
       @video_filepath = @outdir + "/" + File.basename(@video_url)
@@ -199,7 +224,7 @@ module TedTalk
       lang_url = "http://www.ted.com/talks/lang/#{lang}/" + @url_basename
       html = get_html(lang_url)
       lang_doc = Nokogiri::HTML(html)
-      lang_doc.xpath("//meta[@name='title']").first.attribute("content").value.split("|").first.strip + "\n"
+      lang_doc.xpath("//meta[@name='title']").first.attribute("content").value.split("|").first.strip rescue ""
     end
   
     def get_description(lang)
@@ -208,7 +233,7 @@ module TedTalk
       lang_doc = Nokogiri::HTML(html)  
       temp = lang_doc.xpath("//meta[@name='description']").first.attribute("content").value.strip
       /\ATED Talks\s*(.+)\z/ =~ temp
-      $1 + "\n" rescue temp + "\n"
+      $1 rescue temp ""
     end
     
     def get_video
@@ -242,7 +267,9 @@ module TedTalk
         puts "Caption in #{lang} is not available"
         return false
       end    
-      script_json = get_script(lang)
+      json_url = "http://www.ted.com/talks/subtitles/id/#{@ted_id}"
+      json_url << "/lang/#{lang}" unless lang == "en"
+      script_json = get_json(json_url)
       num_total_captions = script_json["captions"].size
       num_digits = num_total_captions.to_s.split(//).size
       captions = [{:id => sprintf("%0#{num_digits}d", 0),
@@ -298,19 +325,19 @@ module TedTalk
         tag.title  += " [x#{@speed}]" if @speed and  @speed != 1
         tag.genre  = "Talk"
           
-        caption_text = @titles["en"]
-        caption_text << @titles[@lang] if @titles[@lang]
+        caption_text = @titles["en"] + "\n"
+        caption_text << @titles[@lang] + "\n" if @titles[@lang]
         caption_text << "--------------------\n"
-        caption_text << @descriptions["en"] 
-        caption_text << @descriptions[@lang] if @titles[@lang]
+        caption_text << @descriptions["en"] + "\n"
+        caption_text << @descriptions[@lang] if @titles[@lang] + "\n"
         caption_text << "\n"
         @captions["en"].each_with_index do |c, index|
           caption_text << "--------------------\n\n" if c[:start_of_paragraph]
           next if c[:content] == ""
           caption_text << c[:content] + "\n"
           if @captions[@lang]
-            jp_content = @captions[@lang][index][:content] + "\n\n" rescue ""
-            caption_text << jp_content
+            bl_content = @captions[@lang][index][:content] + "\n\n" rescue ""
+            caption_text << bl_content
           end
         end
   
@@ -324,29 +351,6 @@ module TedTalk
       end
     end
   
-    def get_script(lang = "en")
-      url = "http://www.ted.com/talks/subtitles/id/#{@ted_id}"
-      url << "/lang/#{lang}" unless lang == "en"
-      out_filepath = @outdir + "/" + @basename + "-" + lang + ".json"    
-      begin
-        if File.exists?(out_filepath)
-          json_text = File.read(out_filepath)
-          script = JSON.parse(json_text)
-        else
-          puts "Downloading captions: #{lang}"    
-          script = nil
-          json_text = get_html(url)
-          script = JSON.parse(json_text) 
-          File.open(out_filepath, "w") do |f|
-            f.write JSON.pretty_generate script
-          end
-        end
-      rescue => e
-        puts "Not able to parse caption data in json"
-        exit
-      end
-      return script
-    end  
   
     def format_captions(captions)
       lang_name = @lang_name || "English"
@@ -406,7 +410,6 @@ module TedTalk
         exit
       end
     end
-
 
   end # of class
 end # of module

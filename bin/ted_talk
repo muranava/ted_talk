@@ -26,8 +26,9 @@ global_opts = Trollop::options do
   banner <<-EOS
 TedTalk helps download TED talk video and covert it to a slowed down MP3 with pauses that is helpful for English learning
 
-Basic usage: tedtalk desc <option>
-             tedtalk exec <option> 
+Basic usage: tedtalk desc <option>  - show TED Talk description(s)
+             tedtalk exec <option>  - download and convert a TED Talk video
+             tedtalk delete         - delete cache folder
 
 For details about <option>, type:
              tedtalk desc -h
@@ -45,7 +46,7 @@ cmd_opts = case cmd
   when "desc" # parse delete options
     desc_opts = Trollop::options do
     banner <<-EOS
-tedtalk desc subcommand shows TED Talk descriptions in the newest official RSS feed or the URL of a specific talk
+ted_talk desc subcommand shows TED Talk descriptions in the newest official RSS feed or the URL of a specific talk
 
 Usage: ted_talk desc <options>
 where <options> are:
@@ -75,7 +76,7 @@ EOS
 when "exec"  # parse exec options
   exec_opts = Trollop::options do
     banner <<-EOS
-tedtalk exec subcommand download TED Talk video and convert it to an MP3 file that is modified in a specified fashion
+ted_talk exec subcommand download TED Talk video and convert it to an MP3 file that is modified in a specified fashion
 
 Usage: ted_talk exec <options>
 where <options> are:
@@ -102,6 +103,8 @@ EOS
 
   tedtalk = TedTalk::Converter.new(source_url)
   tedtalk.execute(outdir, lang, speed, silence)
+when "delete"
+  TedTalk.delete_cache
 else
   Trollop::die "unknown subcommand #{cmd.inspect}"
 end

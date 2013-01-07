@@ -13,6 +13,8 @@ pkg
 rdoc
 spec/reports
 test/tmp
+test/temp
 test/version_tmp
 tmp
 cache/*
+.DS_Store

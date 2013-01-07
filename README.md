@@ -6,7 +6,7 @@ TedTalk helps download TED talk video and covert it to a slowed down MP3 with pa
 
 ## Installation
 
-*TedTalk requires [FFmpeg](http://ffmpeg.org/) with LAME support installed to the system.  Then `gem install`*
+TedTalk requires [FFmpeg](http://ffmpeg.org/) with LAME support and [TagLib](http://taglib.github.com/) audio meta-data library installed to the system
 
     $ gem install ted_talk 
 

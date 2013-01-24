@@ -13,13 +13,13 @@ TedTalk requires [FFmpeg](http://ffmpeg.org/) and [SoX](http://sox.sourceforge.n
 
 ## Usage
 
-	Basic usage: tedtalk desc <option>  - show TED Talk description(s)
-	             tedtalk exec <option>  - download and convert a TED Talk video
-	             tedtalk delete         - delete cache folder
+	Basic usage: ted_talk desc <option>  - show TED Talk description(s)
+	             ted_talk exec <option>  - download and convert a TED Talk video
+	             ted_talk delete         - delete cache folder
 
 	For details about <option>, type:
-	             tedtalk desc -h
-	      or     tedtalk exec -h
+	             ted_talk desc -h
+	      or     ted_talk exec -h
 
 	[global options]:
 	  --version, -v:   Print version and exit

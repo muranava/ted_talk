@@ -89,6 +89,7 @@ EOS
     opt :outdir, "Directory for file output", :default=> "./"
     opt :speed, "Speed of output file [0.1 - 100]", :default => 1.0
     opt :silence, "Length (secondes) of a pause added to each utterance [0.1 - 120]", :default => 0.0
+    opt :video, "Save not only audio but also the original video", :default => false
   end
 
   Trollop::die :outdir, "must be an existing directory" unless File::ftype(exec_opts[:outdir]) == "directory"
@@ -100,9 +101,10 @@ EOS
   outdir     = exec_opts[:outdir]
   speed      = exec_opts[:speed]
   silence    = exec_opts[:silence]
+  video      = exec_opts[:video]
 
   tedtalk = TedTalk::Converter.new(source_url)
-  tedtalk.execute(outdir, lang, speed, silence)
+  tedtalk.execute(outdir, lang, speed, silence, video)
 when "delete"
   TedTalk.delete_cache
 else

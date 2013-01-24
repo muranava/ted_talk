@@ -137,7 +137,7 @@ module TedTalk
       end
     end
   
-    def execute(outdir = "./", lang = "en", speed = 1, silence = 0)
+    def execute(outdir = "./", lang = "en", speed = 1, silence = 0, video = false)
       puts "TedTalk is prepararing for the process"
       @outdir = File.join(outdir, @ted_id + "-" + @basename)    
       Dir.mkdir(@outdir) unless File.exists?(@outdir)    
@@ -148,12 +148,15 @@ module TedTalk
       get_captions("en")      
       setup_lang(lang)
       get_captions(lang)      
-      video_filepath = get_binary(@video_url)
+      video_filepath = get_binary(@video_url)      
       wav_filepath = get_wav(video_filepath)
       outfile = @outdir + "/" + @basename + "-result.mp3"
       speakslow = SpeakSlow::Converter.new(wav_filepath, outfile)
       speakslow.execute(speed, silence)
-      write_info(outfile)    
+      write_info(outfile)
+      if video
+        `cp #{video_filepath} #{@outdir + "/"}`
+      end
     end
     
     def get_title(lang)

@@ -37,7 +37,6 @@ TedTalk requires [FFmpeg](http://ffmpeg.org/) and [SoX](http://sox.sourceforge.n
 	  --lang, -l <s>:   Language of description (default: en)
 	       --rss, -r:   Show descriptions of the newest talks from TED Talk RSS
 	   --url, -u <s>:   URL of a specific TED Talk
-         --video, -v:   Save not only audio but also the original video	
 	      --help, -h:   Show this message
 
 ### exec
@@ -55,4 +54,5 @@ TedTalk requires [FFmpeg](http://ffmpeg.org/) and [SoX](http://sox.sourceforge.n
 	    --speed, -s <f>:   Speed of output file [0.1 - 100] (default: 1.0)
 	  --silence, -i <f>:   Length (secondes) of a pause added to each utterance
 	                       [0.1 - 120] (default: 0.0)
+            --video, -v:   Save not only audio but also the original video	
 	         --help, -h:   Show this message

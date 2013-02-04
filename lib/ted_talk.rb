@@ -172,7 +172,7 @@ module TedTalk
       lang_doc = Nokogiri::HTML(html)  
       temp = lang_doc.xpath("//meta[@name='description']").first.attribute("content").value.strip
       /\ATED Talks\s*(.+)\z/ =~ temp
-      $1 rescue temp ""
+      $1 rescue ""
     end
         
     def get_captions(lang = "en")

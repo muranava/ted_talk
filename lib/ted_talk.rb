@@ -238,10 +238,10 @@ module TedTalk
         tag.title  += " [x#{@speed}]" if @speed and  @speed != 1
         tag.genre  = "Talk"
           
-        caption_text = @titles["en"] + "\n"
+        caption_text = @titles["en"] || ""
         caption_text << @titles[@lang] + "\n" if @titles[@lang]
         caption_text << "--------------------\n"
-        caption_text << @descriptions["en"] + "\n"
+        caption_text << @descriptions["en"] + "\n"  if @descriptions["en"]
         caption_text << @descriptions[@lang] + "\n" if @descriptions[@lang]
         caption_text << "\n"
         @captions["en"].each_with_index do |c, index|

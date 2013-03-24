@@ -114,8 +114,8 @@ module TedTalk
       end
       @lang = lang 
       if lang != "en"
-        @titles[lang] = get_title(lang)
-        @descriptions[lang] = get_description(lang)
+        @titles[lang] = get_title(lang) rescue ""
+        @descriptions[lang] = get_description(lang) rescue ""
         @lang_name = @language_hash[@lang]
       end    
     end
@@ -125,7 +125,7 @@ module TedTalk
       unless @descriptions[lang]
         lang = "en"
       end
-      puts "\nTitle:\n" + @titles["en"]    
+      puts "\nTitle:\n" + @titles["en"]
       puts @titles[lang] if lang != "en"
       puts ""
       puts "Description:\n" + @descriptions[lang]
@@ -170,9 +170,8 @@ module TedTalk
       lang_url = "http://www.ted.com/talks/lang/#{lang}/" + @url_basename
       html = get_html(lang_url)
       lang_doc = Nokogiri::HTML(html)  
-      temp = lang_doc.xpath("//meta[@name='description']").first.attribute("content").value.strip
-      /\ATED Talks\s*(.+)\z/ =~ temp
-      $1 rescue ""
+      result = lang_doc.xpath("//meta[@name='description']").first.attribute("content").value.strip
+      return result || ""
     end
         
     def get_captions(lang = "en")

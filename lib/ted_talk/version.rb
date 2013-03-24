@@ -1,3 +1,3 @@
 module TedTalk
-  VERSION = "0.0.31"
+  VERSION = "0.0.4"
 end

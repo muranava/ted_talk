@@ -19,7 +19,8 @@ require 'ted_talk/unix_tools'
 
 FFMPEG = "/usr/local/bin/ffmpeg"
 
-CACHE_DIR = File.expand_path(File.dirname(__FILE__)) + "/../cache"
+# CACHE_DIR = File.expand_path(File.dirname(__FILE__)) + "/../cache"
+CACHE_DIR = File.expand_path("~/ted_talk_cache")
 
 INTRO_DURATION = 16500
 AD_DURATION = 4000
